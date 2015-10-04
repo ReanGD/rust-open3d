@@ -2,6 +2,8 @@
 extern crate glium;
 extern crate nalgebra as na;
 
+mod camera;
+
 use na::*;
 
 #[derive(Copy, Clone)]
@@ -19,6 +21,8 @@ fn main() {
         .with_title(format!("open3d"))
         .build_glium()
         .unwrap();
+
+    let window = display.get_window().unwrap();
 
     let vertex1 = Vertex { position: [-5.0, 0.0, -5.0] };
     let vertex2 = Vertex { position: [ 5.0, 0.0, -5.0] };
@@ -41,7 +45,7 @@ fn main() {
     uniform mat4 model;
 
     void main() {
-        gl_Position = proj * view * model * vec4(position, 1.0);
+        gl_Position = proj * (view * model) * vec4(position, 1.0);
     }
 "#;
 
@@ -56,44 +60,21 @@ fn main() {
 "#;
 
     let program = glium::Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
+    let mut camera = camera::Camera::new(window, Pnt3::new(0.0, 1.2, 0.0), 0.0_f32);
+    let model = Mat4::<f32>::new_identity(4);
     // let mut rot = Rot3::new(Vec3::new(0.0, 0.0, 0.0));
 
     // let mut t: f32 = -0.5;
     loop {
         let mut target = display.draw();
+        let (width, height) = target.get_dimensions();
+        camera.update(na::Vec2::new(width, height));
+
         target.clear_color(0.0, 0.0, 1.0, 1.0);
 
-        let proj = {
-            let (width, height) = target.get_dimensions();
-            let aspect = height as f32 / width as f32;
-
-            let fov: f32 = 3.141592 / 3.0;
-            let zfar = 1024.0;
-            let znear = 0.1;
-            Persp3::new(aspect, fov, zfar, znear).to_mat()
-        };
-
-
-        let view = {
-            let mut camera: Iso3<f32> = one();
-            let eye = Pnt3::new(0.0, 0.2, 0.0);
-            let at = Pnt3::new(0.5, 0.2, 0.0);
-            let up = Vec3::new(0.0, 1.0, 0.0);
-            camera.look_at(&eye, &at, &up);
-            camera.to_homogeneous()
-        };
-
-        // let view = view_matrix(&[0.5, 0.2, -3.0], &[-0.5, -0.2, 3.0], &[0.0, 1.0, 0.0]);
-        let model = [
-            [1.0, 0.0, 0.0, 0.0],
-            [0.0, 1.0, 0.0, 0.0],
-            [0.0, 0.0, 1.0, 0.0],
-            [0.0, 0.0, 0.0, 1.0f32]
-                ];
-
         let uniforms = uniform! {
-            proj: *proj.as_array(),
-            view: *view.as_array(),
+            proj: camera.proj(),
+            view: camera.view(),
             model: model,
         };
 
@@ -109,7 +90,9 @@ fn main() {
                     &Default::default()).unwrap();
 
         target.finish().unwrap();
+
         for ev in display.poll_events() {
+            camera.process_input(&ev);
             match ev {
                 glium::glutin::Event::KeyboardInput(glium::glutin::ElementState::Released, _, Some(glium::glutin::VirtualKeyCode::Escape)) => return,
                 glium::glutin::Event::Closed => return,
