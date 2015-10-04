@@ -5,3 +5,4 @@ authors = ["ReanGD"]
 
 [dependencies]
 glium = "0.9.1"
+nalgebra = "*"
