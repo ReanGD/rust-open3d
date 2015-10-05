@@ -58,7 +58,7 @@ impl<'a> Camera<'a> {
             self.window_center = na::Pnt2::new(window_size.x as i32 / 2, window_size.y as i32 / 2);
             self.proj.set_aspect(window_size.x as f32 / window_size.y as f32 );
             self.window.set_cursor_position(self.window_center.x, self.window_center.y).unwrap();
-            // .set_cursor_state(glium::glutin::CursorState::Hide)
+            // self.window.set_cursor_state(glium::glutin::CursorState::Hide);
         }
 
         self.rotate = na::Rot3::new_with_euler_angles(self.roll, self.pitch, 0.0_f32);

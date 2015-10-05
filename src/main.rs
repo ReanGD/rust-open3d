@@ -3,37 +3,21 @@ extern crate glium;
 extern crate nalgebra as na;
 
 mod camera;
+mod landscape;
+mod mesh;
 
 use na::*;
-
-#[derive(Copy, Clone)]
-struct Vertex {
-    position: [f32; 3],
-}
-
-implement_vertex!(Vertex, position);
 
 fn main() {
     use glium::{DisplayBuild, Surface};
 
-    let display = glium::glutin::WindowBuilder::new()
+    let display: glium::backend::glutin_backend::GlutinFacade = glium::glutin::WindowBuilder::new()
         .with_dimensions(800, 600)
         .with_title(format!("open3d"))
         .build_glium()
         .unwrap();
 
     let window = display.get_window().unwrap();
-
-    let vertex1 = Vertex { position: [-5.0, 0.0, -5.0] };
-    let vertex2 = Vertex { position: [ 5.0, 0.0, -5.0] };
-    let vertex3 = Vertex { position: [ 5.0, 0.0,  5.0] };
-    let vertex4 = Vertex { position: [ 5.0, 0.0,  5.0] };
-    let vertex5 = Vertex { position: [-5.0, 0.0,  5.0] };
-    let vertex6 = Vertex { position: [-5.0, 0.0, -5.0] };
-    let shape = vec![vertex1, vertex2, vertex3, vertex4, vertex5, vertex6];
-
-    let vertex_buffer = glium::VertexBuffer::new(&display, &shape).unwrap();
-    let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 
     let vertex_shader_src = r#"
     #version 140
@@ -62,9 +46,9 @@ fn main() {
     let program = glium::Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
     let mut camera = camera::Camera::new(window, Pnt3::new(0.0, 1.2, 0.0), 0.0_f32);
     let model = Mat4::<f32>::new_identity(4);
-    // let mut rot = Rot3::new(Vec3::new(0.0, 0.0, 0.0));
 
-    // let mut t: f32 = -0.5;
+    let landscape = landscape::Landscape::new(&display).unwrap();
+
     loop {
         let mut target = display.draw();
         let (width, height) = target.get_dimensions();
@@ -78,15 +62,7 @@ fn main() {
             model: model,
         };
 
-        // t += 0.02;
-        // rot.set_rotation(Vec3::new(0.0, t, 0.2));
-        // let m: Mat4<f32> = rot.to_homogeneous();
-
-        // let uniforms = uniform! {
-        //     matrix: *m.as_array(),
-        // };
-
-        target.draw(&vertex_buffer, &indices, &program, &uniforms,
+        target.draw(&landscape.model.vb, &landscape.model.ib, &program, &uniforms,
                     &Default::default()).unwrap();
 
         target.finish().unwrap();
