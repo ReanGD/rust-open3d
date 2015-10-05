@@ -4,5 +4,6 @@ version = "0.1.0"
 authors = ["ReanGD"]
 
 [dependencies]
-glium = { version = "*", features = ["nalgebra"] }
+image = "*"
 nalgebra = "0.2.14"
+glium = { version = "*", features = ["nalgebra"] }

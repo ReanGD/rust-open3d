@@ -3,6 +3,7 @@ name = "rust-open3d"
 version = "0.1.0"
 dependencies = [
  "glium 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "image 0.3.14 (registry+https://github.com/rust-lang/crates.io-index)",
  "nalgebra 0.2.23 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
