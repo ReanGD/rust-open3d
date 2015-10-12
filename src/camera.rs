@@ -1,11 +1,13 @@
 use std::f32;
 use glium;
+use glium::uniforms::{UniformValue, AsUniformValue};
 use glium::glutin::{Event, ElementState, VirtualKeyCode};
 use na::{self, ToHomogeneous, Inv, Col, Norm, Eye};
-
+use uniform_filler::Filler;
 
 pub struct Camera<'a> {
     proj: na::Persp3<f32>,
+    view: na::Mat4<f32>,
     rotate: na::Rot3<f32>,
     position: na::Vec4<f32>,
     roll: f32,
@@ -24,11 +26,15 @@ impl<'a> Camera<'a> {
         let zfar = 1000.0_f32;
         let znear = 0.1_f32;
         let proj = na::Persp3::new(aspect, fov, zfar, znear);
+        let rotate = na::Rot3::new_identity(3);
+        let position = na::Vec4::new(position.x, position.y, position.z, 1.0_f32);
+        let view = Camera::calc_view(&rotate, &position);
 
         Camera {
             proj: proj,
-            rotate: na::Rot3::new_identity(3),
-            position: na::Vec4::new(position.x, position.y, position.z, 1.0_f32),
+            view: view,
+            rotate: rotate,
+            position: position,
             roll: 0.0_f32,
             pitch: pitch_angle,
             move_forward: 0,
@@ -39,17 +45,13 @@ impl<'a> Camera<'a> {
         }
     }
 
-    pub fn view(&self) -> na::Mat4<f32> {
-        let mut view = self.rotate.to_homogeneous();
-        view.set_col(3, self.position);
+    fn calc_view(rotate: &na::Rot3<f32>, position: &na::Vec4<f32>) -> na::Mat4<f32> {
+        let mut view = rotate.to_homogeneous();
+        view.set_col(3, position.clone());
         match view.inv() {
             Some(x) => x,
             None => panic!("Can't invert view matrix")
         }
-    }
-
-    pub fn proj(&self) -> na::Persp3<f32> {
-        self.proj
     }
 
     pub fn update(&mut self, window_size: na::Vec2<u32>) {
@@ -69,6 +71,7 @@ impl<'a> Camera<'a> {
             self.position.y += dir.y;
             self.position.z += dir.z;
         }
+        self.view = Camera::calc_view(&self.rotate, &self.position);
     }
 
     pub fn process_input(&mut self, event: &Event) {
@@ -122,6 +125,20 @@ impl<'a> Camera<'a> {
                 }
             }
             _ => {}
+        }
+    }
+}
+
+impl<'a> Filler for Camera<'a>  {
+    fn prefix(&self) -> String {
+        "cam".to_string()
+    }
+
+    fn uniform_value(&self, name: &str) -> Option<UniformValue> {
+        match name {
+            "cam_proj" => Some(self.proj.as_uniform_value()),
+            "cam_view" => Some(self.view.as_uniform_value()),
+            _ => None,
         }
     }
 }
