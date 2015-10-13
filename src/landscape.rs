@@ -1,8 +1,11 @@
 use std;
-use glium::backend::glutin_backend::GlutinFacade;
-use mesh::{VertexTex, Mesh};
-use texture;
 use shader;
+use texture;
+use mesh::{VertexTex, Mesh};
+use uniform_filler::Filler;
+use glium::uniforms::{UniformValue, AsUniformValue};
+use glium::backend::glutin_backend::GlutinFacade;
+use glium::texture::texture2d::Texture2d;
 
 pub struct Landscape {
     pub model: Mesh<VertexTex>,
@@ -18,28 +21,27 @@ impl Landscape {
     in vec3 pos;
     in vec2 tex;
 
-    out vec2 f_tex;
+    out vec2 frag_tex;
 
-    uniform mat4 proj;
-    uniform mat4 view;
-    uniform mat4 model;
+    uniform mat4 cam_proj;
+    uniform mat4 cam_view;
 
     void main() {
-        f_tex = tex;
-        gl_Position = proj * (view * model) * vec4(pos, 1.0);
+        frag_tex = tex;
+        gl_Position = cam_proj * cam_view * vec4(pos, 1.0);
     }
 "#;
 
         let fragment_shader_src = r#"
     #version 140
 
-    in vec2 f_tex;
+    in vec2 frag_tex;
     out vec4 color;
 
-    uniform sampler2D tex;
+    uniform sampler2D mesh_tex;
 
     void main() {
-        color = texture(tex, f_tex);
+        color = texture(mesh_tex, frag_tex);
     }
 "#;
         Ok(try!(shader::Shader::new(facade, vertex_shader_src, fragment_shader_src)))
@@ -66,5 +68,20 @@ impl Landscape {
             texture: texture,
         })
     }
+}
 
+impl Filler for Landscape  {
+    fn prefix(&self) -> String {
+        "mesh".to_string()
+    }
+
+    fn uniform_value<'a>(&'a self, name: &str) -> Option<UniformValue> {
+        match name {
+            "mesh_tex" => {
+                let tex: &'a Texture2d = &self.texture.data;
+                Some(tex.as_uniform_value())
+            },
+            _ => None,
+        }
+    }
 }
