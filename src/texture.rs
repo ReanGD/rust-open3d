@@ -1,6 +1,7 @@
 use std;
 use utils;
 use image;
+use glium::uniforms::{UniformValue, AsUniformValue};
 use glium::texture::texture2d::Texture2d;
 use glium::backend::glutin_backend::GlutinFacade;
 
@@ -26,6 +27,11 @@ impl Texture {
         Ok(Texture {
             data: texture,
         })
+    }
+
+    pub fn as_uniform_value<'a>(&self) -> UniformValue<'a> {
+        let tex: &'a Texture2d = &(self.data);
+        tex.as_uniform_value()
     }
 
 }

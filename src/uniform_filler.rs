@@ -1,4 +1,3 @@
-use std::rc::Rc;
 use shader::Shader;
 use std::collections::HashMap;
 use glium::uniforms::{UniformValue, Uniforms};
@@ -10,7 +9,7 @@ pub trait Filler {
 
 pub struct UniformFiller<'a> {
     fillers: HashMap<String, &'a Filler>,
-    shader: Option<Rc<Shader>>,
+    shader: Option<&'a Shader>,
 }
 
 impl<'a> UniformFiller<'a> {
@@ -25,7 +24,7 @@ impl<'a> UniformFiller<'a> {
         let _ = self.fillers.entry(filler.prefix()).or_insert(filler);
     }
 
-    pub fn set_shader(&mut self, shader: Rc<Shader>) {
+    pub fn set_shader(&mut self, shader: &'a Shader) {
         self.shader = Some(shader);
     }
 }

@@ -15,12 +15,11 @@ impl Tree {
 
     in vec3 pos;
 
-    uniform mat4 proj;
-    uniform mat4 view;
-    uniform mat4 model;
+    uniform mat4 cam_proj;
+    uniform mat4 cam_view;
 
     void main() {
-        gl_Position = proj * (view * model) * vec4(pos, 1.0);
+        gl_Position = cam_proj * cam_view * vec4(pos, 1.0);
     }
 "#;
 
